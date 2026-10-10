@@ -1,0 +1,46 @@
+/configs/config.yaml
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/vendor/
+/go.work
+
+# Build
+bin/
+build/
+dist/
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.bak
+
+# Environment and configuration
+.env
+.env.local
+*.log
+*.toml
+config.yaml
