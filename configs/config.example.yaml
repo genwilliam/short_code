@@ -1,0 +1,9 @@
+server:
+  address: ":8080"
+
+database:
+  user: root
+  password: "your_password"
+  host: 127.0.0.1
+  port: 3306
+  schema_file: ../db/init.sql
