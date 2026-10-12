@@ -1,45 +1,52 @@
 package internal
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
 	"os"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 )
 
-func InitDB() {
-	db, err := sql.Open(
-		"mysql",
-		"root:lian@tcp(127.0.0.1:3306)/?charset=utf8mb4&parseTime=True&loc=Local",
-	)
+func InitDB(config DatabaseConfig) (*sql.DB, error) {
+	driverConfig, err := mysql.ParseDSN(config.DSN())
 	if err != nil {
-		fmt.Println("open database failed:", err)
-		return
-	}
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		fmt.Println("database connect failed:", err)
-		return
+		return nil, err
 	}
 
-	fmt.Println("database connect success")
-
-	sqlBytes, err := os.ReadFile("db/init.sql")
+	schema, err := os.ReadFile(config.SchemaFile)
 	if err != nil {
-		fmt.Println("read sql file failed:", err)
-		return
+		return nil, err
 	}
 
-	sqlContent := string(sqlBytes)
-
-	_, err = db.Exec(sqlContent)
+	bootstrapConfig := *driverConfig
+	bootstrapConfig.DBName = ""
+	bootstrapConfig.MultiStatements = true
+	bootstrapDB, err := sql.Open("mysql", bootstrapConfig.FormatDSN())
 	if err != nil {
-		fmt.Println("execute sql failed:", err)
-		return
+		return nil, err
+	}
+	defer bootstrapDB.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := bootstrapDB.PingContext(ctx); err != nil {
+		return nil, err
+	}
+	if _, err := bootstrapDB.ExecContext(ctx, string(schema)); err != nil {
+		return nil, err
 	}
 
-	fmt.Println("execute sql success")
+	driverConfig.DBName = "short_url"
+	driverConfig.MultiStatements = false
+	db, err := sql.Open("mysql", driverConfig.FormatDSN())
+	if err != nil {
+		return nil, err
+	}
+	if err := db.PingContext(ctx); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
+	return db, nil
 }

@@ -12,24 +12,17 @@
 
 ## 启动服务
 
-在项目根目录配置数据库和监听地址后运行：
+先复制配置模板，再编辑 `configs/config.yaml`，填写本机 MySQL 用户、密码和服务监听地址。真实配置文件已加入 Git 忽略规则，只有不含个人密码的示例模板会被 Git 跟踪。
 
 ```sh
-export MYSQL_USER=root
-export MYSQL_PASSWORD='你的数据库密码'
-export MYSQL_ADDR=127.0.0.1:3306
-export HTTP_ADDR=:8080
+cp configs/config.example.yaml configs/config.yaml
+# 编辑 configs/config.yaml，填写 database.password 等本机配置。
 go run ./cmd/server
 ```
 
-也可以使用完整 DSN 配置数据库连接；设置后 `SHORT_CODE_DB_DSN` 优先于 `MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_ADDR`：
+服务启动时会执行 `database.schema_file` 指定的 SQL 文件。MySQL 账号需要有创建配置中指定的数据库和数据表的权限。默认监听地址为 `:8080`。
 
-```sh
-export SHORT_CODE_DB_DSN='user:password@tcp(127.0.0.1:3306)/?charset=utf8mb4&parseTime=True&loc=Local'
-go run ./cmd/server
-```
-
-默认情况下，服务从项目根目录读取 `db/init.sql`。如果从其他目录启动，可通过 `SHORT_CODE_SCHEMA` 指定 SQL 文件路径。
+也可以通过 `-config` 指定其他配置文件路径，例如：`go run ./cmd/server -config /path/to/config.yaml`。相对的 `database.schema_file` 路径以配置文件所在目录为基准解析。
 
 ## API
 
@@ -75,7 +68,3 @@ curl -i -X POST http://localhost:8080/api/short-links \
 ```sh
 go test ./...
 ```
-
-## 部署提示
-
-创建接口目前没有身份验证。公开部署前，建议在服务前增加鉴权和限流，避免未授权创建短链接。

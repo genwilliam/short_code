@@ -1,20 +1,22 @@
 # Short Code
 
+Language / 语言: [English](README.md) | [简体中文](README.zh-CN.md)
+
 A small HTTP short-link service backed by MySQL 8.0+.
 
 ## Run
 
-The service initializes the schema in `db/init.sql` on startup. The MySQL account must be able to create the `short_url` database and its table.
+Copy the example configuration and edit `configs/config.yaml` with your local MySQL credentials and server settings. The real configuration file is ignored by Git; only the example template is tracked.
 
 ```sh
-export MYSQL_USER=root
-export MYSQL_PASSWORD='your-password'
-export MYSQL_ADDR=127.0.0.1:3306
-export HTTP_ADDR=:8080
+cp -n configs/config.example.yaml configs/config.yaml
+# Edit configs/config.yaml and set database.password.
 go run ./cmd/server
 ```
 
-Alternatively, set `SHORT_CODE_DB_DSN` to a complete MySQL DSN. `SHORT_CODE_SCHEMA` can point to the schema file if the process is not started from the repository root.
+The service initializes the schema file configured by `database.schema_file` on startup. The MySQL account must be able to create the configured database and its table. By default, the server listens on `:8080`.
+
+To use a configuration file at another path, pass `-config`, for example `go run ./cmd/server -config /path/to/config.yaml`. Relative `database.schema_file` paths are resolved from the configuration file's directory.
 
 ## API
 

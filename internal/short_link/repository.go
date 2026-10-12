@@ -202,3 +202,45 @@ func (r *ShortLinkRepository) FindByCode(
 
 	return &link, nil
 }
+
+func (r *ShortLinkRepository) ResolveByCode(
+	ctx context.Context,
+	shortCode string,
+) (*ShortLink, error) {
+	const query = `
+		SELECT
+			id,
+			short_code,
+			original_url,
+			status,
+			expires_at,
+			created_at,
+			updated_at,
+			deleted_at
+		FROM short_links
+		WHERE short_code = ?
+		  AND status = ?
+		  AND deleted_at IS NULL
+		  AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+	`
+
+	var link ShortLink
+	err := r.db.QueryRowContext(ctx, query, shortCode, StatusEnabled).Scan(
+		&link.ID,
+		&link.ShortCode,
+		&link.OriginalURL,
+		&link.Status,
+		&link.ExpiresAt,
+		&link.CreatedAt,
+		&link.UpdatedAt,
+		&link.DeletedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrShortLinkNotFound
+		}
+		return nil, err
+	}
+
+	return &link, nil
+}
